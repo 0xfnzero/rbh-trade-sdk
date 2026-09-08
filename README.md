@@ -1,266 +1,248 @@
 <div align="center">
-    <h1>Pons Trade SDK for Go</h1>
-    <h3><em>Production-oriented Go SDK for pons v2 launches, bonding-curve trades, fees, and graduation</em></h3>
+  <h1>RBH Trade SDK for Go</h1>
+  <h3><em>Low-latency Go SDK for Robinhood Chain launchpads and Uniswap v4 trading</em></h3>
 </div>
 
 <p align="center">
-    <strong>Typed helpers for building and reading pons v2 transactions on Robinhood Chain, aligned with the official ponsfamily v2 docs and Solidity source.</strong>
+  <strong>Typed calldata builders for Pons V2, Long, o1, Pools.trade, PAIR, Bags V2, Permit2, and the Robinhood Chain Universal Router.</strong>
 </p>
 
 <p align="center">
-    <a href="https://pkg.go.dev/github.com/0xfnzero/pons-trade-sdk">
-        <img src="https://pkg.go.dev/badge/github.com/0xfnzero/pons-trade-sdk.svg" alt="Go Reference">
-    </a>
-    <a href="https://github.com/0xfnzero/pons-trade-sdk/releases/latest">
-        <img src="https://img.shields.io/github/v/release/0xfnzero/pons-trade-sdk" alt="Release">
-    </a>
-    <a href="LICENSE">
-        <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-    </a>
+  <a href="https://pkg.go.dev/github.com/0xfnzero/rbh-trade-sdk"><img src="https://pkg.go.dev/badge/github.com/0xfnzero/rbh-trade-sdk.svg" alt="Go Reference"></a>
+  <a href="https://github.com/0xfnzero/rbh-trade-sdk/releases/latest"><img src="https://img.shields.io/github/v/release/0xfnzero/rbh-trade-sdk" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go">
-    <img src="https://img.shields.io/badge/EVM-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" alt="EVM">
-    <img src="https://img.shields.io/badge/Pons-v2-4B8BBE?style=for-the-badge" alt="Pons v2">
+  <a href="./README_CN.md">中文</a> |
+  <a href="./README.md">English</a> |
+  <a href="https://fnzero.dev/">Website</a> |
+  <a href="https://t.me/fnzero_group">Telegram</a> |
+  <a href="https://discord.gg/vuazbGkqQE">Discord</a>
 </p>
-
-<p align="center">
-    <a href="./README_CN.md">中文</a> |
-    <a href="./README.md">English</a> |
-    <a href="https://fnzero.dev/">Website</a> |
-    <a href="https://t.me/fnzero_group">Telegram</a> |
-    <a href="https://discord.gg/vuazbGkqQE">Discord</a>
-</p>
-
----
 
 ## SDKs
 
 | SDK | Module |
 |-----|--------|
-| Trade | [`github.com/0xfnzero/pons-trade-sdk`](https://github.com/0xfnzero/pons-trade-sdk) |
-| Parser | [`github.com/0xfnzero/pons-parser-sdk`](https://github.com/0xfnzero/pons-parser-sdk) |
+| Trade | [`github.com/0xfnzero/rbh-trade-sdk`](https://github.com/0xfnzero/rbh-trade-sdk) |
+| Parser | [`github.com/0xfnzero/rbh-parser-sdk`](https://github.com/0xfnzero/rbh-parser-sdk) |
 
-## What This SDK Is For
+## Coverage
 
-`pons-trade-sdk` is a Go SDK for services, bots, launch tooling, keepers, and indexer backends that interact with pons v2 on Robinhood Chain. Integration behavior follows the official docs first; when the docs omit a complete ABI/event/error/state detail, the SDK fills that gap from the public V2 Solidity source.
+| Protocol | Launch lifecycle | Trading path |
+|----------|------------------|--------------|
+| Pons V2 | Bonding curve, then Uniswap v4 | Native Pons client and curve quotes before graduation; shared v4 builder after graduation |
+| Long | Direct Doppler/Airlock Uniswap v4 | Shared v4 builder using the exact `Initialize` PoolKey |
+| o1 | Permanent Uniswap v4 liquidity | Shared v4 builder with optional hook data |
+| Pools.trade | Instant v4 or crowdsale, then v4 | Pools launch builders and shared v4 builder |
+| PAIR | One to five permanent v4 pools | PAIR multi-market launch and shared v4 builder |
+| Bags V2 | Bonding curve, then Uniswap v4 | Bags curve builders and shared v4 builder |
 
-| Area | Coverage |
-|------|----------|
-| Chain | Robinhood Chain, chain id `4663` |
-| Official references | [docs.ponsfamily.com/v2](https://docs.ponsfamily.com/v2), [ponsdotdev/ponsfamily](https://github.com/ponsdotdev/ponsfamily) |
-| Trading workflows | Launch, launch-and-buy, buy, sell, approve, fee claim, fee sweep, graduation |
-| Reads | Factory config, launch records, curve reserves, hook fees, vault vesting, token metadata |
-| Runtime | Go 1.25+; use a supported, fully patched Go release for production builds |
+`SupportedProtocols()` exposes machine-readable `ProtocolCapabilities` for
+launch, curve, v4, deterministic-address, and verified local-pricing support.
+Applications should use those flags to fail closed instead of treating a
+calldata builder as proof that pre-execution pricing is available.
 
 ## Features
 
-1. Official pons v2 contract addresses for Robinhood Chain.
-2. ABI-backed calldata builders for launch, buy, sell, claim, sweep, and graduation calls.
-3. `Client` helpers over `bind.ContractBackend` for typed reads and transactions.
-4. Deterministic bonding-curve quote helpers for buy/sell previews and slippage bounds.
-5. Uniswap v4 pool key and pool id reconstruction for graduated launches.
-6. Fee escrow and buyback vesting helpers.
-7. Custom error decoding for pons v2, OpenZeppelin ownership, SafeERC20, and reentrancy errors.
-8. Sibling parser SDK for pons v2 logs and receipt parsing.
+- Robinhood Chain `4663` deployment catalog and optional bytecode validation.
+- Robinhood-specific Universal Router v4 exact-input encoding, including the required `minHopPriceX36` field.
+- ERC-20 and Permit2 approval builders.
+- V4 Quoter and StateView request/response helpers.
+- Local V4 exact-input quotes from event-derived tick/liquidity state, using the audited Uniswap core math and optional output-hook fee cuts.
+- Verified o1 LaunchHook quote-fee and linear anti-snipe decay math via `BuildO1HookPoolConfig`, `DecodeO1HookPoolConfig`, `O1HookFeeBPS`, and `QuoteO1V4ExactInput`; callers must prewarm the frozen pool schedule and supply the target block timestamp.
+- Verified Bags V4 hook pricing via `QuoteBagsV4ExactInput`: the hook overrides the core LP fee to zero and charges 2% on the WETH leg.
+- Launch builders for Long, o1, Pools.trade, PAIR, and Bags V2.
+- Complete Pons V2 ABI, typed read client, curve quote math, calldata builders, and transaction wrappers.
+- Deterministic Pons CREATE2 launch prediction pinned to Sourcify exact-match deployer bytecode, including economics commitment and runtime code-hash verification.
+- No hidden RPC calls in calldata builders and no private-key custody.
 
 ## Installation
 
 ### Direct Clone
 
-Clone this SDK into your project directory at the released `v0.1.0` tag:
+Clone the released source into your project directory:
 
 ```bash
 cd your_project_root_directory
-git clone --branch v0.1.0 --depth 1 https://github.com/0xfnzero/pons-trade-sdk
+git clone --branch v0.1.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
 ```
 
-Add the local module to your project's `go.mod`:
+Add the local module to your application's `go.mod`:
 
 ```go
-require github.com/0xfnzero/pons-trade-sdk v0.1.0
+require github.com/0xfnzero/rbh-trade-sdk v0.1.0
 
-replace github.com/0xfnzero/pons-trade-sdk => ./pons-trade-sdk
+replace github.com/0xfnzero/rbh-trade-sdk => ./rbh-trade-sdk
 ```
 
-Then resolve dependencies and import the SDK package normally:
+Then run:
 
 ```bash
 go mod tidy
 ```
 
-```go
-import "github.com/0xfnzero/pons-trade-sdk/ponstrade"
-```
-
 ### Go Modules
 
 ```bash
-go get github.com/0xfnzero/pons-trade-sdk@v0.1.0
+go get github.com/0xfnzero/rbh-trade-sdk@v0.1.0
 ```
 
-## Usage Examples
+## Build a v4 Swap
 
-### Read Factory State
-
-```go
-client, eth, err := ponstrade.Dial(ctx, "https://your-robinhood-chain-rpc")
-if err != nil {
-    panic(err)
-}
-defer eth.Close()
-
-fee, err := client.LaunchFee(ctx, nil)
-enabled, err := client.LaunchEnabled(ctx, nil)
-configs, err := client.OpenLaunchConfigs(ctx, nil)
-```
-
-`Dial` verifies Robinhood Chain id `4663` and all SDK contract destinations before returning. When injecting a custom or local-chain `bind.ContractBackend`, use `NewClientChecked`; `NewClient` remains available for partial/offline clients whose methods validate their own required destination at call time.
-
-`OpenLaunchConfigs` defaults to at most 4,096 configurations and 16 concurrent RPC calls. Use `OpenLaunchConfigsWithOptions` to choose a different explicit bound:
+Always obtain the complete `PoolKey` from the PoolManager `Initialize` event. Do not infer Long's hook from `LaunchCreated.poolOrHook`.
 
 ```go
-configs, err := client.OpenLaunchConfigsWithOptions(ctx, ponstrade.LaunchConfigQueryOptions{
-    MaxConfigs: 8192,
-    Concurrency: 32,
-}, nil)
-```
+package main
 
-### Quote A Curve Buy
+import (
+    "math/big"
+    "time"
 
-```go
-quote, err := client.QuoteBuy(ctx, curve, quoteIn, recipient, nil)
-if err != nil {
-    panic(err)
-}
+    sdk "github.com/0xfnzero/rbh-trade-sdk/rbhtrade"
+    "github.com/ethereum/go-ethereum/common"
+)
 
-minOut, err := ponstrade.MinTokensOutForBuy(quoteIn, quote, 500) // 5%
-if err != nil {
-    panic(err)
-}
-```
+func main() {
+    token := common.HexToAddress("0xYourToken")
+    quote := common.HexToAddress("0xYourQuoteToken")
 
-Use `MinTokensOutForBuy` for curve buys. It preserves the quoted price bound when the curve partially fills a buy near graduation. `MinOutputWithSlippage` remains suitable for ordinary output amounts such as sell quotes and returns an error for invalid amounts or slippage above 100%.
-
-`QuoteBuy` and `QuoteSell` return `ErrCurveClosed` instead of quoting a curve that is graduated or ready to graduate. Invalid, zero-output states return `ErrInvalidQuote` or `ErrUnquotableTrade`; do not build a transaction from those results.
-
-### Build A Native Buy Transaction
-
-```go
-auth.Value = quoteIn // native quote buys require msg.value == quoteIn
-
-tx, err := client.Buy(auth, curve, quoteIn, minOut, recipient)
-if err != nil {
-    revertData := []byte{} // fill from your RPC / eth_call / estimate error when available
-    if decoded, ok, parseErr := ponstrade.ParseContractError(revertData); parseErr == nil && ok {
-        panic(decoded)
+    call, err := sdk.BuildV4ExactInputSingle(sdk.ExactInputRequest{
+        PoolKey: sdk.PoolKey{
+            Currency0:   quote, // currencies must be address-sorted
+            Currency1:   token,
+            Fee:         0x800000,
+            TickSpacing: 8,
+            Hooks:       common.HexToAddress("0xPoolHookFromInitialize"),
+        },
+        CurrencyIn:       quote,
+        CurrencyOut:      token,
+        AmountIn:         big.NewInt(1_000_000),
+        AmountOutMinimum: big.NewInt(900_000),
+        Deadline:         uint64(time.Now().Add(30 * time.Second).Unix()),
+    })
+    if err != nil {
+        panic(err)
     }
-    panic(err)
+
+    // Sign and send call.To, call.Data, and call.Value with your own stack.
+    _ = call
 }
 ```
 
-For ERC-20 quote buys, approve the curve to spend the quote token and keep `auth.Value` at zero.
-
-### Launch A Token
+For an ERC-20 input, authorize Permit2 and then the Universal Router:
 
 ```go
-salt, err := ponstrade.RandomSalt()
-if err != nil {
-    panic(err)
-}
-
-expected, err := client.PreviewLaunchEconomics(ctx, big.NewInt(0), ponstrade.NativeQuote, nil)
-if err != nil {
-    panic(err)
-}
-
-params := ponstrade.TokenParams{
-    Name:              "Example",
-    Symbol:            "EXMPL",
-    CreatorTaxBps:     100,
-    BuybackEnabled:    true,
-    ExpectedEconomics: ponstrade.HashToBytes32(expected),
-    Salt:              salt,
-}
-
-auth.Value = launchFee
-tx, err := client.LaunchToken(auth, params, big.NewInt(0), ponstrade.NativeQuote, nil)
-```
-
-### Launch And Buy Atomically
-
-```go
-auth.Value = ponstrade.LaunchAndBuyValue(ponstrade.NativeQuote, launchFee, quoteIn)
-
-tx, err := client.LaunchAndBuy(
-    auth,
-    params,       // creatorFeeRecipient should be explicit for the router path
-    big.NewInt(0),
-    ponstrade.NativeQuote,
-    quoteIn,
-    minTokensOut,
-    recipient,
-    nil,
+approvals, err := sdk.BuildUniversalRouterApprovals(
+    quote,
+    big.NewInt(1_000_000),
+    uint64(time.Now().Add(24*time.Hour).Unix()),
 )
 ```
 
-For ERC-20 pair launches, approve the launch-and-buy router for `quoteIn` first and use `LaunchAndBuyValue(pairToken, launchFee, quoteIn)`, which returns only the native launch fee.
+Native input uses the zero address as `CurrencyIn`; the swap call automatically sets `Value = AmountIn` and needs no Permit2 approval.
 
-### Graduation And Fees
+## Quote and Pool State
 
 ```go
-launched, err := client.GetLaunchedToken(ctx, token, nil)
-poolID, err := ponstrade.PoolID(ponstrade.BuildPoolKey(launched, client.Addresses().MemeHook))
+quoteCall, err := sdk.BuildV4QuoteExactInputSingle(sdk.QuoteExactInputRequest{
+    PoolKey: key, CurrencyIn: quoteToken, AmountIn: amountIn, HookData: hookData,
+})
+// eth_call quoteCall, then:
+result, err := sdk.DecodeV4QuoteExactInputSingle(returnData)
 
-tx, err := client.Graduate(auth, token)
-tx, err = client.CreateGraduatedPool(auth, token)
-tx, err = client.SweepPoolFees(auth, poolID, minConversionQuoteOut, minBuybackTokensOut)
+poolID, err := sdk.PoolID(key)
+slotCall, err := sdk.BuildStateViewGetSlot0(poolID)
+slot0, err := sdk.DecodeStateViewSlot0(slotReturnData)
 ```
 
-## Project Structure
+## Long Launches
 
-```text
-.
-├── ponstrade/                 # Trade SDK package
-├── examples/basic/            # Basic quote example
-├── go.mod
-└── go.sum
+`BuildLongCreate` implements the verified `LongLauncher.create` selector `0x882db707`. The caller supplies the official Doppler/Airlock factory payloads; the SDK rejects a token factory other than Long's trusted deployment.
+
+```go
+call, err := sdk.BuildLongCreate(sdk.LongCreateParams{
+    InitialSupply:     initialSupply,
+    NumTokensToSell:   tokensToSell,
+    Numeraire:         stockOrQuoteToken,
+    TokenFactory:      sdk.DefaultAddressBook().LongTokenFactory,
+    TokenFactoryData:  tokenFactoryData,
+    GovernanceFactory: governanceFactory,
+    PoolInitializer:   poolInitializer,
+    PoolInitializerData: poolInitializerData,
+    LiquidityMigrator: liquidityMigrator,
+    Salt:              salt,
+})
 ```
+
+Use the sibling parser to pair `LaunchCreated` with the same transaction's PoolManager `Initialize`; only that event contains the actual PoolKey.
+
+## Other Launchpads
+
+| Protocol | Builder | Value and funding rule |
+|----------|---------|------------------------|
+| o1 | `BuildO1Launch`, `BuildO1LaunchAndBuy` | Pass the current launch fee in `value`; native buy funding requires `value >= AmountIn` |
+| Pools.trade | `BuildPoolsCreateToken`, `BuildPoolsDistributeToken`, `BuildPoolsDistributeWithNative`, `BuildPoolsMulticall` | Pass the exact fee/funding value quoted by the protocol; empty multicalls are rejected |
+| PAIR | `BuildPAIRLaunch` | Allocation weights must total 10,000 BPS; use `PAIRNoDeveloperBuy` with zero buy amounts to disable the developer buy |
+| Bags V2 | `BuildBagsCreate`, `BuildBagsCreateAndBuy`, `BuildBagsBuy`, `BuildBagsSell` | Curve buys are funded by `value`; curve sells require token approval outside this SDK |
+
+Read fee, configuration, quote, and deadline inputs from the target protocol immediately before building the call. Builders validate ABI bounds and structural invariants, but they do not fetch mutable on-chain configuration.
+
+## Pons V2
+
+```go
+import pons "github.com/0xfnzero/rbh-trade-sdk/adapters/pons"
+
+client := pons.NewClient(backend)
+state, err := client.CurveState(ctx, curve, nil)
+quote, err := pons.QuoteBuyFromState(
+    state.Reserves,
+    state.SellableTokens,
+    quoteIn,
+    state.FeeBps,
+    state.CreatorTaxBps,
+    snipeTaxBps,
+)
+minTokensOut, err := pons.MinTokensOutForBuy(quoteIn, quote, slippageBps)
+buyCall, err := pons.BuildBuy(curve, quoteIn, minTokensOut, recipient, true)
+sellCall, err := pons.BuildSell(curve, tokensIn, minQuoteOut, recipient)
+```
+
+The Pons package is implemented entirely inside this module. No separate Pons SDK dependency is required.
+
+## Deployment Validation
+
+```go
+backend, err := ethclient.DialContext(ctx, rpcURL)
+client, err := sdk.NewClientChecked(ctx, backend)
+```
+
+`NewClientChecked` verifies chain id `4663` and bytecode at every fixed contract address used directly by a builder. This belongs at startup, not in the trading hot path.
+
+Run the live checks with:
+
+```bash
+ROBINHOOD_RPC_URL=https://rpc.mainnet.chain.robinhood.com go test ./rbhtrade -run TestRobinhoodDeployment
+```
+
+## Security Notes
+
+1. Simulate or estimate every value-bearing call against the intended block before signing.
+2. Set a non-zero `AmountOutMinimum` from a fresh quote and an explicit short deadline.
+3. Contract addresses and PoolKeys are immutable inputs to a trade decision; do not infer them from token symbols or untrusted APIs.
+4. `minHopPriceX36` defaults to zero because Robinhood's router requires the field. `AmountOutMinimum` remains the primary aggregate slippage bound.
+5. Some Long Doppler pools can restrict routers during an initial window. A revert is not evidence that the PoolKey should be changed.
+6. The SDK returns unsigned call data. Nonce management, EIP-1559 fees, key custody, signing, simulation, retry policy, and submission remain with the caller.
 
 ## Development
 
 ```bash
 go test ./...
-```
-
-## Important Notes
-
-1. Integration flow and deployed addresses follow the official docs first. Missing full ABI, event, error, and state surfaces are filled from `contractsV2/src/v2` in `ponsdotdev/ponsfamily`.
-2. Native quote buys require `msg.value == quoteIn`; ERC-20 quote buys require `msg.value == 0`.
-3. `launchAndBuy` is implemented from the official docs address and ABI. The public V2 source tree references this trusted router through `launchForwarder` / `launchTokenFor`, but does not include the router contract source.
-4. This SDK builds and submits through go-ethereum abstractions; nonce, gas, fee strategy, private key custody, and RPC retry policy stay with the caller.
-5. Run fork or testnet simulations before sending production value.
-6. Composite reads use concurrent RPC calls and pin them to one block when the backend exposes `BlockNumber`. Pass an explicit `bind.CallOpts.BlockNumber` when using a custom backend that does not expose it.
-7. `BPS` and `OnePctBPS` are immutable numeric constants. Convert them with `new(big.Int).SetUint64(ponstrade.BPS)` when a `*big.Int` is required.
-8. `WithAddresses` replaces the complete SDK address set. `Dial` and `NewClientChecked` reject a zero fixed-contract destination; the zero address remains valid only where it denotes `NativeQuote`.
-9. Launch metadata is validated by UTF-8 byte length before calldata is built: name 64, symbol 16, logo 512, description 2,048, and each social field 256 bytes, matching the V2 launch deployer.
-10. Exported ABI variables are compatibility snapshots. SDK internals use independent immutable parses, so changing an exported ABI does not alter transaction or read behavior.
-11. Transaction helpers for non-payable methods reject a non-zero `auth.Value` with `ErrUnexpectedTransactionValue`, preventing accidental native value from reaching a reverting call. Payable launch and buy helpers leave the exact value policy to the caller because it depends on the live launch fee and quote asset.
-12. `ParseContractError` accepts at most 1 MiB of recognized revert data and rejects trailing or otherwise non-canonical ABI encodings. A colliding 4-byte custom-error selector is reported as ambiguous instead of being assigned an arbitrary name.
-
-Run the read-only deployment checks against Robinhood Chain with:
-
-```bash
-ROBINHOOD_RPC_URL=https://your-robinhood-chain-rpc go test ./ponstrade -run TestRobinhoodDeployment
+go test -race ./...
+go vet ./...
 ```
 
 ## License
 
 MIT
-
-## Contact
-
-- Website: [fnzero.dev](https://fnzero.dev/)
-- Telegram: [fnzero_group](https://t.me/fnzero_group)
-- Discord: [FnZero Discord](https://discord.gg/vuazbGkqQE)
