@@ -67,13 +67,13 @@ calldata”误当成“已经能在执行前可靠报价”。
 
 ```bash
 cd your_project_root_directory
-git clone --branch v0.2.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
+git clone --branch v0.3.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
 ```
 
 在业务项目的 `go.mod` 中添加：
 
 ```go
-require github.com/0xfnzero/rbh-trade-sdk v0.2.0
+require github.com/0xfnzero/rbh-trade-sdk v0.3.0
 
 replace github.com/0xfnzero/rbh-trade-sdk => ./rbh-trade-sdk
 ```
@@ -87,7 +87,7 @@ go mod tidy
 ### 使用 Go Modules
 
 ```bash
-go get github.com/0xfnzero/rbh-trade-sdk@v0.2.0
+go get github.com/0xfnzero/rbh-trade-sdk@v0.3.0
 ```
 
 ## 构建 v4 Swap

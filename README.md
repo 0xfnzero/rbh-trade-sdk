@@ -72,13 +72,13 @@ Clone the released source into your project directory:
 
 ```bash
 cd your_project_root_directory
-git clone --branch v0.2.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
+git clone --branch v0.3.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
 ```
 
 Add the local module to your application's `go.mod`:
 
 ```go
-require github.com/0xfnzero/rbh-trade-sdk v0.2.0
+require github.com/0xfnzero/rbh-trade-sdk v0.3.0
 
 replace github.com/0xfnzero/rbh-trade-sdk => ./rbh-trade-sdk
 ```
@@ -92,7 +92,7 @@ go mod tidy
 ### Go Modules
 
 ```bash
-go get github.com/0xfnzero/rbh-trade-sdk@v0.2.0
+go get github.com/0xfnzero/rbh-trade-sdk@v0.3.0
 ```
 
 ## Build a v4 Swap
