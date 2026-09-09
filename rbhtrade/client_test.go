@@ -96,3 +96,10 @@ func TestNewClientRejectsNilInputs(t *testing.T) {
 		t.Fatal("nil context was accepted")
 	}
 }
+
+func TestNilClientAddresses(t *testing.T) {
+	var client *Client
+	if client.Addresses() != (AddressBook{}) {
+		t.Fatal("nil client returned nonzero addresses")
+	}
+}

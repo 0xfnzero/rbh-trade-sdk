@@ -50,6 +50,12 @@ calldata builder as proof that pre-execution pricing is available.
 - Robinhood-specific Universal Router v4 exact-input encoding, including the required `minHopPriceX36` field.
 - ERC-20 and Permit2 approval builders.
 - V4 Quoter and StateView request/response helpers.
+- Bags Lens `getTokenState` request/response support for curve, migration,
+  real/virtual reserves, and bonding progress.
+- Bags curve `quoteBuy` / `quoteSell` request builders and typed response
+  decoders.
+- Bags Lens `claimableOf` support and a safe minimum-output helper for curve or
+  v4 quotes.
 - Local V4 exact-input quotes from event-derived tick/liquidity state, using the audited Uniswap core math and optional output-hook fee cuts.
 - Verified o1 LaunchHook quote-fee and linear anti-snipe decay math via `BuildO1HookPoolConfig`, `DecodeO1HookPoolConfig`, `O1HookFeeBPS`, and `QuoteO1V4ExactInput`; callers must prewarm the frozen pool schedule and supply the target block timestamp.
 - Verified Bags V4 hook pricing via `QuoteBagsV4ExactInput`: the hook overrides the core LP fee to zero and charges 2% on the WETH leg.
@@ -66,13 +72,13 @@ Clone the released source into your project directory:
 
 ```bash
 cd your_project_root_directory
-git clone --branch v0.1.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
+git clone --branch v0.2.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
 ```
 
 Add the local module to your application's `go.mod`:
 
 ```go
-require github.com/0xfnzero/rbh-trade-sdk v0.1.0
+require github.com/0xfnzero/rbh-trade-sdk v0.2.0
 
 replace github.com/0xfnzero/rbh-trade-sdk => ./rbh-trade-sdk
 ```
@@ -86,7 +92,7 @@ go mod tidy
 ### Go Modules
 
 ```bash
-go get github.com/0xfnzero/rbh-trade-sdk@v0.1.0
+go get github.com/0xfnzero/rbh-trade-sdk@v0.2.0
 ```
 
 ## Build a v4 Swap
@@ -156,6 +162,30 @@ poolID, err := sdk.PoolID(key)
 slotCall, err := sdk.BuildStateViewGetSlot0(poolID)
 slot0, err := sdk.DecodeStateViewSlot0(slotReturnData)
 ```
+
+Read Bags curve state through the verified Bags Lens. The SDK only builds the
+call and decodes bytes returned by the caller's `eth_call`; it never connects
+to RPC implicitly:
+
+```go
+stateCall, err := sdk.BuildBagsGetTokenState(token)
+// Execute stateCall with your own RPC backend, then:
+state, err := sdk.DecodeBagsTokenState(returnData)
+
+buyQuoteCall, err := sdk.BuildBagsQuoteBuy(state.Curve, quoteIn)
+buyQuote, err := sdk.DecodeBagsQuoteBuy(buyQuoteReturnData)
+minTokensOut, err := sdk.MinOutputWithSlippage(buyQuote.TokensOut, 500)
+
+sellQuoteCall, err := sdk.BuildBagsQuoteSell(state.Curve, tokensIn)
+sellQuote, err := sdk.DecodeBagsQuoteSell(sellQuoteReturnData)
+
+claimableCall, err := sdk.BuildBagsClaimableOf(token, user)
+claimable, err := sdk.DecodeBagsClaimableOf(claimableReturnData)
+```
+
+`state.Exists` distinguishes unknown tokens and `state.Migrated` reports the
+transition to v4. Reserve, price, and progress fields retain contract-native
+integer units.
 
 ## Long Launches
 

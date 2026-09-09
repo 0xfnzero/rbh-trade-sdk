@@ -92,6 +92,17 @@ func TestNonceSequenceConcurrentReservations(t *testing.T) {
 	}
 }
 
+func TestNilNonceSequence(t *testing.T) {
+	var sequence *NonceSequence
+	if got := sequence.Reserve(); got != 0 {
+		t.Fatalf("nil sequence reservation = %d", got)
+	}
+	if got := sequence.Peek(); got != 0 {
+		t.Fatalf("nil sequence peek = %d", got)
+	}
+	sequence.AdvanceTo(1)
+}
+
 type fakeRawRPC struct {
 	delay time.Duration
 	hash  common.Hash
@@ -160,6 +171,26 @@ func TestBroadcasterAcceptsAlreadyKnownButNotNonceTooLow(t *testing.T) {
 	}
 	if _, err := nonceLow.BroadcastRaw(context.Background(), "0x0102", expected); !errors.Is(err, ErrBroadcastFailed) {
 		t.Fatalf("nonce-too-low error = %v", err)
+	}
+	unknown, err := NewBroadcaster(Relay{Client: fakeRawRPC{err: errors.New("unknown transaction")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := unknown.BroadcastRaw(context.Background(), "0x0102", expected); !errors.Is(err, ErrBroadcastUnknown) {
+		t.Fatalf("unknown-transaction error = %v", err)
+	}
+}
+
+func TestAlreadyKnownClassification(t *testing.T) {
+	for _, message := range []string{"already known", "known transaction: 0x1234", "rpc error: known transaction"} {
+		if !IsAlreadyKnownError(errors.New(message)) {
+			t.Fatalf("%q was not classified as already known", message)
+		}
+	}
+	for _, message := range []string{"unknown transaction", "transaction not known", "known transaction pool unavailable"} {
+		if IsAlreadyKnownError(errors.New(message)) {
+			t.Fatalf("%q was classified as already known", message)
+		}
 	}
 }
 

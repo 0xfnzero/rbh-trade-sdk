@@ -166,8 +166,12 @@ func TestKnownMethodSelectors(t *testing.T) {
 		{"Bags buyFor", bagsCurveABI.Methods["buyFor"].ID, "06501a6a"},
 		{"Bags sell", bagsCurveABI.Methods["sell"].ID, "d79875eb"},
 		{"Bags sellFor", bagsCurveABI.Methods["sellFor"].ID, "5f6108ff"},
+		{"Bags quoteBuy", bagsCurveABI.Methods["quoteBuy"].ID, "4beb394c"},
+		{"Bags quoteSell", bagsCurveABI.Methods["quoteSell"].ID, "a64190c4"},
 		{"v4 quote", v4QuoterABI.Methods["quoteExactInputSingle"].ID, "aa9d21cb"},
 		{"StateView getSlot0", stateViewABI.Methods["getSlot0"].ID, "c815641c"},
+		{"Bags Lens getTokenState", bagsLensABI.Methods["getTokenState"].ID, "0b3eb970"},
+		{"Bags Lens claimableOf", bagsLensABI.Methods["claimableOf"].ID, "3319fdb0"},
 	}
 	for _, test := range tests {
 		if got := common.Bytes2Hex(test.got); got != test.want {

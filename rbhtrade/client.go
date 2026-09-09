@@ -53,7 +53,12 @@ func isNilInterface(value any) bool {
 	}
 }
 
-func (c *Client) Addresses() AddressBook { return c.addresses }
+func (c *Client) Addresses() AddressBook {
+	if c == nil {
+		return AddressBook{}
+	}
+	return c.addresses
+}
 
 func NewClientChecked(ctx context.Context, backend DeploymentBackend) (*Client, error) {
 	client, err := NewClient(ctx, backend)

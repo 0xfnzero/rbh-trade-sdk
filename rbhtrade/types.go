@@ -67,6 +67,38 @@ type Slot0 struct {
 	LPFee        uint32
 }
 
+// BagsTokenState is the exact state exposed by the verified Bags Lens for one
+// token. Reserve and price values use the contracts' native integer units.
+type BagsTokenState struct {
+	Exists               bool
+	Migrated             bool
+	Curve                common.Address
+	FeeShare             common.Address
+	PoolID               common.Hash
+	ThresholdQuote       *big.Int
+	RealQuoteReserves    *big.Int
+	RealTokenReserves    *big.Int
+	VirtualTokenReserves *big.Int
+	VirtualQuoteReserves *big.Int
+	PriceQuotePerToken   *big.Int
+	BondingProgressPct   *big.Int
+	TotalRaised          *big.Int
+}
+
+type BagsBuyQuote struct {
+	TokensOut   *big.Int
+	FeeQuote    *big.Int
+	NetQuoteIn  *big.Int
+	GrossUsed   *big.Int
+	RefundQuote *big.Int
+}
+
+type BagsSellQuote struct {
+	QuoteToSeller *big.Int
+	FeeQuote      *big.Int
+	GrossQuoteOut *big.Int
+}
+
 type LongCreateParams struct {
 	InitialSupply         *big.Int       `abi:"initialSupply"`
 	NumTokensToSell       *big.Int       `abi:"numTokensToSell"`

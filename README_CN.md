@@ -49,6 +49,10 @@ calldata”误当成“已经能在执行前可靠报价”。
 - 正确编码 Robinhood 修改版 Universal Router v4 exact-input，包括必需的 `minHopPriceX36`。
 - ERC-20 与 Permit2 授权 builder。
 - V4 Quoter 和 StateView 的请求及返回值解码。
+- Bags Lens `getTokenState` 的请求与返回值解码，可读取 Curve、迁移状态、
+  真实/虚拟储备和 Bonding 进度。
+- Bags Curve `quoteBuy` / `quoteSell` 的请求与类型化返回值解码。
+- Bags Lens `claimableOf` 查询，以及适用于 Curve/v4 quote 的安全滑点下限计算。
 - 基于事件 tick/liquidity 状态的本地 V4 exact-input 报价，使用经审计的 Uniswap 核心数学，并支持输出侧 hook 费率扣减。
 - 按 exact-match 验证源码实现 o1 LaunchHook 的 quote 资产费用和线性 anti-snipe 衰减公式：`BuildO1HookPoolConfig`、`DecodeO1HookPoolConfig`、`O1HookFeeBPS`、`QuoteO1V4ExactInput`；调用方必须预热池子的固定费率计划，并提供目标区块时间戳。
 - 按 exact-match 验证源码实现 Bags V4 hook 报价：`QuoteBagsV4ExactInput` 将核心 LP 费覆盖为 0，并在 WETH 腿收取 2%。
@@ -63,13 +67,13 @@ calldata”误当成“已经能在执行前可靠报价”。
 
 ```bash
 cd your_project_root_directory
-git clone --branch v0.1.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
+git clone --branch v0.2.0 --depth 1 https://github.com/0xfnzero/rbh-trade-sdk
 ```
 
 在业务项目的 `go.mod` 中添加：
 
 ```go
-require github.com/0xfnzero/rbh-trade-sdk v0.1.0
+require github.com/0xfnzero/rbh-trade-sdk v0.2.0
 
 replace github.com/0xfnzero/rbh-trade-sdk => ./rbh-trade-sdk
 ```
@@ -83,7 +87,7 @@ go mod tidy
 ### 使用 Go Modules
 
 ```bash
-go get github.com/0xfnzero/rbh-trade-sdk@v0.1.0
+go get github.com/0xfnzero/rbh-trade-sdk@v0.2.0
 ```
 
 ## 构建 v4 Swap
@@ -137,6 +141,28 @@ poolID, err := rbhtrade.PoolID(key)
 slotCall, err := rbhtrade.BuildStateViewGetSlot0(poolID)
 slot0, err := rbhtrade.DecodeStateViewSlot0(slotReturnData)
 ```
+
+Bags Curve 状态通过已验证的 Bags Lens 读取；SDK 只构造调用并解码调用方传回的
+`eth_call` 结果，不会隐式连接 RPC：
+
+```go
+stateCall, err := rbhtrade.BuildBagsGetTokenState(token)
+// 使用自己的 RPC backend 执行 stateCall 后：
+state, err := rbhtrade.DecodeBagsTokenState(returnData)
+
+buyQuoteCall, err := rbhtrade.BuildBagsQuoteBuy(state.Curve, quoteIn)
+buyQuote, err := rbhtrade.DecodeBagsQuoteBuy(buyQuoteReturnData)
+minTokensOut, err := rbhtrade.MinOutputWithSlippage(buyQuote.TokensOut, 500)
+
+sellQuoteCall, err := rbhtrade.BuildBagsQuoteSell(state.Curve, tokensIn)
+sellQuote, err := rbhtrade.DecodeBagsQuoteSell(sellQuoteReturnData)
+
+claimableCall, err := rbhtrade.BuildBagsClaimableOf(token, user)
+claimable, err := rbhtrade.DecodeBagsClaimableOf(claimableReturnData)
+```
+
+`state.Exists` 区分未知 token；`state.Migrated` 表示是否已迁移至 v4。
+储备、价格和进度字段保持合约原始整数单位。
 
 ## Long Launch
 

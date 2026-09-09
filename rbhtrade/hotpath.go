@@ -154,6 +154,9 @@ func NewNonceSequence(next uint64) *NonceSequence {
 }
 
 func (s *NonceSequence) Reserve() uint64 {
+	if s == nil {
+		return 0
+	}
 	return s.next.Add(1) - 1
 }
 

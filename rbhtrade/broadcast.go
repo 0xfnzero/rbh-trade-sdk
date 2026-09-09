@@ -104,8 +104,20 @@ func IsAlreadyKnownError(err error) bool {
 	if err == nil {
 		return false
 	}
-	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "already known") || strings.Contains(message, "known transaction")
+	message := strings.TrimSpace(strings.ToLower(err.Error()))
+	if strings.Contains(message, "already known") {
+		return true
+	}
+	for {
+		if message == "known transaction" || strings.HasPrefix(message, "known transaction:") {
+			return true
+		}
+		separator := strings.Index(message, ": ")
+		if separator < 0 {
+			return false
+		}
+		message = message[separator+2:]
+	}
 }
 
 // IsDefinitiveBroadcastRejection reports errors proving that this exact raw
